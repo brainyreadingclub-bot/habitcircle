@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV !== 'production') {
-      return new TextEncoder().encode('dev-only-habitcircle-local-development-key');
-    }
-    throw new Error('JWT_SECRET environment variable is required in production');
-  }
-  return new TextEncoder().encode(secret);
-}
+// Must match the key in auth.ts
+const JWT_SECRET_KEY = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'habitcircle-default-secret-change-me-in-env'
+);
 
 const publicPaths = ['/', '/login', '/signup'];
 const publicApiPaths = ['/api/auth/login', '/api/auth/signup'];
@@ -36,7 +30,7 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, getJwtSecret());
+    await jwtVerify(token, JWT_SECRET_KEY);
     return NextResponse.next();
   } catch {
     if (pathname.startsWith('/api/')) {

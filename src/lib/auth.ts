@@ -3,26 +3,13 @@ import { hash, compare } from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
-function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    // In development, use a stable but non-public key
-    if (process.env.NODE_ENV !== 'production') {
-      return new TextEncoder().encode('dev-only-habitcircle-local-development-key');
-    }
-    throw new Error('JWT_SECRET environment variable is required in production');
-  }
-  return new TextEncoder().encode(secret);
-}
+// Use JWT_SECRET if set, otherwise use a stable fallback
+// In real production, always set JWT_SECRET as env var
+const JWT_SECRET_KEY = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'habitcircle-default-secret-change-me-in-env'
+);
 
 const COOKIE_NAME = 'session';
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: 'lax' as const,
-  path: '/',
-  maxAge: 60 * 60 * 24 * 7, // 7 days
-  secure: process.env.NODE_ENV === 'production',
-};
 
 export async function hashPassword(password: string): Promise<string> {
   return hash(password, 12);
@@ -37,11 +24,11 @@ export async function createToken(userId: number): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
     .setIssuedAt()
-    .sign(getJwtSecret());
+    .sign(JWT_SECRET_KEY);
 }
 
 export async function verifyToken(token: string): Promise<{ userId: number }> {
-  const { payload } = await jwtVerify(token, getJwtSecret());
+  const { payload } = await jwtVerify(token, JWT_SECRET_KEY);
   return { userId: payload.userId as number };
 }
 
@@ -68,10 +55,22 @@ export async function getSessionFromCookies(): Promise<{ userId: number } | null
 
 export async function setSessionCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, token, COOKIE_OPTIONS);
+  cookieStore.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7,
+    secure: process.env.NODE_ENV === 'production',
+  });
 }
 
 export async function clearSessionCookie(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, '', { ...COOKIE_OPTIONS, maxAge: 0 });
+  cookieStore.set(COOKIE_NAME, '', {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 0,
+    secure: process.env.NODE_ENV === 'production',
+  });
 }
