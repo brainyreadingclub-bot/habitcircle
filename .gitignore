@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+habitcircle.db
+scripts/
+habitcircle.db-shm
+habitcircle.db-wal
