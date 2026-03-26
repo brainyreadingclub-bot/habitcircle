@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useFreshDate } from '@/hooks/useFreshDate';
+import { useAuthFetch } from '@/hooks/useAuthFetch';
 
 interface Habit {
   id: number;
@@ -58,17 +60,18 @@ export default function DashboardPage() {
   const [milestoneHabit, setMilestoneHabit] = useState<{ name: string; emoji: string; streak: number } | null>(null);
   const [motivation] = useState(() => MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)]);
   const prevCompletedRef = useRef(false);
+  const todayStr = useFreshDate();
+  const authFetch = useAuthFetch();
 
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const today = new Date(todayStr + 'T00:00:00+09:00');
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
   const fetchData = useCallback(async () => {
     try {
       const [habitsRes, feedRes, meRes] = await Promise.all([
-        fetch('/api/habits').then(r => r.json()),
-        fetch('/api/feed').then(r => r.json()),
-        fetch('/api/auth/me').then(r => r.json()),
+        authFetch('/api/habits').then(r => r.json()),
+        authFetch('/api/feed').then(r => r.json()),
+        authFetch('/api/auth/me').then(r => r.json()),
       ]);
       setHabits(habitsRes.habits || []);
       setFeed((feedRes.feed || []).slice(0, 3));
@@ -76,7 +79,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [todayStr, authFetch]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -103,16 +106,22 @@ export default function DashboardPage() {
     }
     setTimeout(() => setAnimatingId(null), 500);
 
-    // Optimistic update
+    // Optimistic update with rollback
+    const previousHabits = habits;
     setHabits(prev => prev.map(h =>
       h.id === habitId ? { ...h, completed_today: wasCompleted ? 0 : 1, streak: newStreak } : h
     ));
 
-    await fetch(`/api/habits/${habitId}/log`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: todayStr }),
-    });
+    try {
+      const res = await authFetch(`/api/habits/${habitId}/log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr }),
+      });
+      if (!res.ok) setHabits(previousHabits);
+    } catch {
+      setHabits(previousHabits);
+    }
   }
 
   // Detect all-complete state (peak-end rule: celebrate the climax moment)
@@ -229,7 +238,7 @@ export default function DashboardPage() {
       {/* Habits list */}
       {totalCount === 0 ? (
         <div className="text-center py-16 animate-in delay-2">
-          <div className="w-16 h-16 bg-teal-light rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">✅</div>
+          <div className="w-16 h-16 bg-teal-light rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl" role="img" aria-label="체크">✅</div>
           <p className="text-warm-gray mb-1">아직 습관이 없어요</p>
           <p className="text-sm text-warm-gray-light mb-6">첫 번째 습관을 만들어보세요!</p>
           <Link href="/habits/new" className="inline-flex px-6 py-2.5 bg-teal text-white rounded-xl text-sm font-medium hover:bg-teal-dark transition-colors">
@@ -274,7 +283,7 @@ export default function DashboardPage() {
                       <span className={`text-xs text-amber flex items-center gap-0.5 ${
                         isMilestone(habit.streak) ? 'font-bold' : ''
                       }`}>
-                        <span className={isMilestone(habit.streak) ? 'animate-fire inline-block' : ''}>🔥</span>
+                        <span className={isMilestone(habit.streak) ? 'animate-fire inline-block' : ''} role="img" aria-label="연속 기록">🔥</span>
                         {habit.streak}일
                       </span>
                     )}
@@ -331,7 +340,7 @@ export default function DashboardPage() {
       {/* Streak warning — loss aversion (cognitive psychology: fear of losing is 2x stronger than gaining) */}
       {habits.some(h => h.streak >= 3 && !h.completed_today) && !allDone && (
         <div className="mt-4 p-3 bg-amber-light/60 rounded-xl flex items-center gap-2.5 animate-in delay-6">
-          <span className="text-lg animate-shake">⚠️</span>
+          <span className="text-lg animate-shake" role="img" aria-label="경고">⚠️</span>
           <div>
             <p className="text-xs font-medium text-amber-dark">연속 기록을 지켜주세요!</p>
             <p className="text-[11px] text-amber-dark/70">

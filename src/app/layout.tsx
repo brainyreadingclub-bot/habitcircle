@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Noto_Sans_KR, Playfair_Display } from "next/font/google";
+import { Outfit, IBM_Plex_Sans_KR } from "next/font/google";
 import "./globals.css";
 
-const notoSansKR = Noto_Sans_KR({
+const ibmPlexSansKR = IBM_Plex_Sans_KR({
   subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
   variable: "--font-sans",
   display: "swap",
 });
 
-const playfairDisplay = Playfair_Display({
+const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-display",
   display: "swap",
 });
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${notoSansKR.variable} ${playfairDisplay.variable}`}>
+    <html lang="ko" className={`${ibmPlexSansKR.variable} ${outfit.variable}`}>
       <body className="font-sans bg-cream text-charcoal min-h-dvh">
         {children}
       </body>

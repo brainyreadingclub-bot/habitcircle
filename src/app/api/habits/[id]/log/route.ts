@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getDb } from '@/lib/db';
 import { getSession } from '@/lib/auth';
-import { jsonResponse, errorResponse, isValidDate } from '@/lib/utils';
+import { jsonResponse, errorResponse, isValidDate, todayStr } from '@/lib/utils';
 
 // Toggle habit completion for a date
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,6 +13,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (!date || !isValidDate(date)) {
     return errorResponse('유효하지 않은 날짜 형식입니다. (YYYY-MM-DD)', 400);
+  }
+
+  const serverToday = todayStr();
+  if (date !== serverToday) {
+    return errorResponse('오늘 날짜만 기록할 수 있습니다.', 400);
   }
 
   const db = getDb();

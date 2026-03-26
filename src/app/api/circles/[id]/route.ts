@@ -46,6 +46,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
   if (!circle) return errorResponse('서클을 삭제할 권한이 없습니다.', 403);
 
-  db.prepare('DELETE FROM circles WHERE id = ?').run(id);
+  // ON DELETE CASCADE handles circle_members and circle_habits
+  const deleteCircle = db.transaction(() => {
+    db.prepare('DELETE FROM circles WHERE id = ?').run(id);
+  });
+  deleteCircle();
   return jsonResponse({ message: '서클이 삭제되었습니다.' });
 }

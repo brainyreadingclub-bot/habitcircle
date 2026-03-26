@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 
 export function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

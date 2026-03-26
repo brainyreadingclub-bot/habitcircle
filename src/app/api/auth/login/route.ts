@@ -11,10 +11,12 @@ export async function POST(request: NextRequest) {
       return errorResponse('이메일과 비밀번호를 입력해주세요.', 400);
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     const db = getDb();
     const user = db.prepare(
-      'SELECT id, username, email, password_hash, display_name, avatar_color FROM users WHERE email = ?'
-    ).get(email) as { id: number; username: string; email: string; password_hash: string; display_name: string; avatar_color: string } | undefined;
+      'SELECT id, username, email, password_hash, display_name, avatar_color FROM users WHERE LOWER(email) = ?'
+    ).get(normalizedEmail) as { id: number; username: string; email: string; password_hash: string; display_name: string; avatar_color: string } | undefined;
 
     if (!user) {
       return errorResponse('이메일 또는 비밀번호가 올바르지 않습니다.', 401);

@@ -25,36 +25,15 @@ export async function POST(request: NextRequest) {
       return errorResponse('표시 이름은 100자 이하여야 합니다.', 400);
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const db = getDb();
 
-    // Check if already exists — if so, try to log them in instead
     const existing = db.prepare(
-      'SELECT id, username, email, display_name, avatar_color, password_hash FROM users WHERE username = ? OR email = ?'
-    ).get(username, email) as { id: number; username: string; email: string; display_name: string; avatar_color: string; password_hash: string } | undefined;
+      'SELECT id FROM users WHERE username = ? OR LOWER(email) = ?'
+    ).get(username, normalizedEmail);
 
     if (existing) {
-      // If same email, try auto-login (handles the "created but cookie failed" case)
-      if (existing.email === email) {
-        try {
-          const { verifyPassword } = await import('@/lib/auth');
-          const valid = await verifyPassword(password, existing.password_hash);
-          if (valid) {
-            const token = await createToken(existing.id);
-            await setSessionCookie(token);
-            return jsonResponse({
-              user: {
-                id: existing.id,
-                username: existing.username,
-                email: existing.email,
-                displayName: existing.display_name,
-                avatarColor: existing.avatar_color,
-              },
-            }, 200);
-          }
-        } catch {
-          // Fall through to error
-        }
-      }
       return errorResponse('이미 사용 중인 사용자명 또는 이메일입니다.', 409);
     }
 
@@ -64,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     const result = db.prepare(
       'INSERT INTO users (username, email, password_hash, display_name, avatar_color) VALUES (?, ?, ?, ?, ?)'
-    ).run(username, email, passwordHash, displayName, avatarColor);
+    ).run(username, normalizedEmail, passwordHash, displayName, avatarColor);
 
     const userId = result.lastInsertRowid as number;
     const token = await createToken(userId);
@@ -74,7 +53,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: userId,
         username,
-        email,
+        email: normalizedEmail,
         displayName,
         avatarColor,
       },

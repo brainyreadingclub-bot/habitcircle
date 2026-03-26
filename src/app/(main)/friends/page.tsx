@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuthFetch } from '@/hooks/useAuthFetch';
 
 interface Friend {
   id: number;
@@ -35,13 +36,14 @@ export default function FriendsPage() {
   const [searchName, setSearchName] = useState('');
   const [searchMsg, setSearchMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const authFetch = useAuthFetch();
 
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     const [friendsRes, feedRes] = await Promise.all([
-      fetch('/api/friends').then(r => r.json()),
-      fetch('/api/feed').then(r => r.json()),
+      authFetch('/api/friends').then(r => r.json()),
+      authFetch('/api/feed').then(r => r.json()),
     ]);
     setFriends(friendsRes.friends || []);
     setPendingReceived(friendsRes.pendingReceived || []);
@@ -52,18 +54,21 @@ export default function FriendsPage() {
   async function sendRequest(e: React.FormEvent) {
     e.preventDefault();
     setSearchMsg('');
-    const res = await fetch('/api/friends', {
+    const res = await authFetch('/api/friends', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: searchName }),
     });
     const data = await res.json();
     setSearchMsg(data.message || data.error);
-    if (res.ok) setSearchName('');
+    if (res.ok) {
+      setSearchName('');
+      loadData();
+    }
   }
 
   async function handleRequest(friendshipId: number, action: 'accept' | 'decline') {
-    await fetch(`/api/friends/${friendshipId}`, {
+    await authFetch(`/api/friends/${friendshipId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),

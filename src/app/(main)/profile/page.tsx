@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthFetch } from '@/hooks/useAuthFetch';
 
 interface User {
   id: number;
@@ -28,21 +29,25 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const authFetch = useAuthFetch();
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/auth/me').then(r => r.json()),
-      fetch('/api/stats').then(r => r.json()),
+      authFetch('/api/auth/me').then(r => r.json()),
+      authFetch('/api/stats').then(r => r.json()),
     ]).then(([userData, statsData]) => {
       setUser(userData.user);
       setStats(statsData);
       setLoading(false);
     });
-  }, []);
+  }, [authFetch]);
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      router.push('/login');
+    }
   }
 
   if (loading || !user || !stats) {
@@ -82,7 +87,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-2 gap-3 mb-6 animate-in delay-2">
         <Link href="/friends" className="bg-surface rounded-2xl border border-border-light p-4 hover:border-teal/30 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-lavender-light rounded-xl flex items-center justify-center text-lg">👋</div>
+            <div className="w-10 h-10 bg-lavender-light rounded-xl flex items-center justify-center text-lg" role="img" aria-label="친구">👋</div>
             <div>
               <p className="text-lg font-bold">{stats.friendCount}</p>
               <p className="text-[11px] text-warm-gray">친구</p>
@@ -91,7 +96,7 @@ export default function ProfilePage() {
         </Link>
         <Link href="/circles" className="bg-surface rounded-2xl border border-border-light p-4 hover:border-teal/30 transition-colors">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-teal-light rounded-xl flex items-center justify-center text-lg">👥</div>
+            <div className="w-10 h-10 bg-teal-light rounded-xl flex items-center justify-center text-lg" role="img" aria-label="서클">👥</div>
             <div>
               <p className="text-lg font-bold">{stats.circleCount}</p>
               <p className="text-[11px] text-warm-gray">서클</p>

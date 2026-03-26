@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthFetch } from '@/hooks/useAuthFetch';
+import { getKSTDateStr } from '@/hooks/useFreshDate';
 
 // ===== STEP DATA =====
 
@@ -86,9 +88,11 @@ export default function OnboardingPage() {
   const [createdHabits, setCreatedHabits] = useState<Array<{ id: number; name: string; emoji: string }>>([]);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const authFetch = useAuthFetch();
 
   useEffect(() => {
-    fetch('/api/auth/me').then(r => r.json()).then(d => {
+    authFetch('/api/auth/me').then(r => r.json()).then(d => {
       setUserName(d.user?.displayName || '');
     });
   }, []);
@@ -106,15 +110,28 @@ export default function OnboardingPage() {
 
   async function createHabits() {
     setSaving(true);
+    setCreateError('');
     const created: Array<{ id: number; name: string; emoji: string }> = [];
     for (const habit of selectedHabits) {
-      const res = await fetch('/api/habits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: habit.name, emoji: habit.emoji, isShared: true }),
-      });
-      const data = await res.json();
-      if (res.ok) created.push({ id: data.habit.id, name: habit.name, emoji: habit.emoji });
+      try {
+        const res = await authFetch('/api/habits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: habit.name, emoji: habit.emoji, isShared: true }),
+        });
+        const data = await res.json();
+        if (res.ok) created.push({ id: data.habit.id, name: habit.name, emoji: habit.emoji });
+      } catch {
+        // continue to next habit
+      }
+    }
+    if (created.length === 0) {
+      setCreateError('습관 생성에 실패했습니다. 다시 시도해주세요.');
+      setSaving(false);
+      return;
+    }
+    if (created.length < selectedHabits.length) {
+      setCreateError(`${selectedHabits.length - created.length}개의 습관을 만들지 못했습니다.`);
     }
     setCreatedHabits(created);
     setSaving(false);
@@ -122,8 +139,8 @@ export default function OnboardingPage() {
   }
 
   async function checkHabit(habitId: number) {
-    const today = new Date().toISOString().split('T')[0];
-    await fetch('/api/habits/' + habitId + '/log', {
+    const today = getKSTDateStr();
+    await authFetch('/api/habits/' + habitId + '/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date: today }),
@@ -294,6 +311,10 @@ export default function OnboardingPage() {
               </button>
               <span className="text-xs text-warm-gray-light">{selectedHabits.length}/5 선택됨</span>
             </div>
+
+            {createError && (
+              <p className="text-sm text-coral text-center mb-3">{createError}</p>
+            )}
 
             <button
               onClick={createHabits}

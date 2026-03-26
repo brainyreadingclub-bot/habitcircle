@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuthFetch } from '@/hooks/useAuthFetch';
 
 interface HabitDetail {
   id: number;
@@ -26,16 +27,27 @@ export default function HabitDetailPage({ params }: { params: Promise<{ id: stri
   const [habit, setHabit] = useState<HabitDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const authFetch = useAuthFetch();
 
   useEffect(() => {
-    fetch(`/api/habits/${id}`).then(r => r.json()).then(d => { setHabit(d.habit); setLoading(false); });
-  }, [id]);
+    authFetch(`/api/habits/${id}`).then(r => r.json()).then(d => { setHabit(d.habit); setLoading(false); });
+  }, [id, authFetch]);
 
   async function handleDelete() {
     if (!confirm('이 습관을 삭제하시겠습니까?')) return;
     setDeleting(true);
-    await fetch(`/api/habits/${id}`, { method: 'DELETE' });
-    router.push('/habits');
+    try {
+      const res = await authFetch(`/api/habits/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        router.push('/habits');
+      } else {
+        alert('삭제에 실패했습니다. 다시 시도해주세요.');
+        setDeleting(false);
+      }
+    } catch {
+      alert('네트워크 오류가 발생했습니다.');
+      setDeleting(false);
+    }
   }
 
   if (loading || !habit) {
