@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ls:*)",
+      "Bash(find /c/Projects/habitcircle -type f -name manifest.json -o -name sw.js -o -name service-worker.ts -o -name *.webmanifest)",
+      "Bash(grep -r \"email\\\\|notification\\\\|push\\\\|sms\\\\|webhook\" /c/Projects/habitcircle/src --include=*.ts --include=*.tsx)",
+      "Bash(grep -r sort_order /c/Projects/habitcircle/src --include=*.ts --include=*.tsx)",
+      "Bash(node:*)",
+      "Bash(npx tsx:*)",
+      "Bash(ls \"C:/Projects/habitcircle/src/app/\\(main\\)/insights\")",
+      "Bash(ls \"src/app/\\(main\\)/insights/page.tsx\" \"src/app/\\(main\\)/insights/[id]/page.tsx\" \"src/lib/insights.ts\")",
+      "Bash(node -e \":*)",
+      "Bash(cd:*)"
+    ]
+  }
+}

@@ -11,10 +11,14 @@ npm run dev          # Start dev server at http://localhost:3000
 npm run build        # Production build
 npm start            # Start production server
 npm run lint         # ESLint (flat config, ESLint 9)
-npx tsx scripts/seed.ts  # Seed database with demo data (3 users, password: "password")
 ```
 
-No test framework is configured.
+No test framework is configured. No seed script — use the app's signup/onboarding flow to create data.
+
+## CRITICAL: Data Safety Rules
+
+- **NEVER delete or modify `habitcircle.db` directly.** Use API routes and migrations only.
+- Schema changes go in `db/index.ts` migrations (use `migrateAddColumn`), not by recreating the DB.
 
 ## Architecture
 
