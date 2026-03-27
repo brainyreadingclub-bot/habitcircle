@@ -12,7 +12,21 @@ const publicApiPaths = ['/api/auth/login', '/api/auth/signup'];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (publicPaths.includes(pathname) || publicApiPaths.includes(pathname)) {
+  if (publicApiPaths.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  // If user has valid session and visits public pages, redirect to dashboard
+  if (publicPaths.includes(pathname)) {
+    const token = request.cookies.get('session')?.value;
+    if (token) {
+      try {
+        await jwtVerify(token, JWT_SECRET_KEY);
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      } catch {
+        // Invalid/expired token — let them see the public page
+      }
+    }
     return NextResponse.next();
   }
 

@@ -1,18 +1,6 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LandingPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => { if (res.ok) router.replace('/dashboard'); })
-      .catch(() => {});
-  }, [router]);
-
   return (
     <div className="min-h-dvh flex flex-col relative overflow-hidden">
       {/* Ambient glow */}
