@@ -16,6 +16,7 @@ interface CircleDetail {
 
 interface MemberProgress {
   id: number;
+  username: string;
   displayName: string;
   avatarColor: string;
   role: string;
@@ -131,9 +132,9 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
                           style={{ backgroundColor: member.avatarColor }}>
-                          {member.displayName[0]}
+                          {member.username[0]}
                         </div>
-                        <span className="text-sm font-medium truncate max-w-[80px]">{member.displayName}</span>
+                        <span className="text-sm font-medium truncate max-w-[80px]">{member.username}</span>
                       </div>
                     </td>
                     {member.dailyProgress.map((day, i) => {
@@ -189,10 +190,10 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
             <div key={member.id} className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-border-light">
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
                 style={{ backgroundColor: member.avatarColor }}>
-                {member.displayName[0]}
+                {member.username[0]}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{member.displayName}</p>
+                <p className="text-sm font-medium truncate">{member.username}</p>
               </div>
               {member.role === 'owner' && (
                 <span className="text-[10px] bg-amber-light text-amber-dark px-1.5 py-0.5 rounded-md font-medium">관리자</span>

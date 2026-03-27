@@ -16,6 +16,7 @@ interface Habit {
 }
 
 interface FeedItem {
+  username: string;
   display_name: string;
   avatar_color: string;
   habit_name: string;
@@ -230,12 +231,12 @@ export default function DashboardPage() {
               {feed.slice(0, 3).map((f, i) => (
                 <div key={i} className="w-6 h-6 rounded-full border-2 border-teal-light flex items-center justify-center text-white text-[8px] font-bold"
                   style={{ backgroundColor: f.avatar_color, zIndex: 3 - i }}>
-                  {f.display_name[0]}
+                  {f.username[0]}
                 </div>
               ))}
             </div>
             <p className="text-xs text-teal-dark flex-1">
-              <span className="font-medium">{feed[0].display_name}</span>님이{feed.length > 1 ? ` 외 ${feed.length - 1}명이` : ''} 오늘 습관을 완료했어요
+              <span className="font-medium">{feed[0].username}</span>님이{feed.length > 1 ? ` 외 ${feed.length - 1}명이` : ''} 오늘 습관을 완료했어요
             </p>
           </div>
         </div>

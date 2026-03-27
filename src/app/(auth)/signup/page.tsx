@@ -56,20 +56,22 @@ export default function SignupPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4 animate-in delay-2">
           <div>
+            <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">닉네임</label>
+            <input
+              type="text" required value={form.username} onChange={e => update('username', e.target.value)}
+              className="w-full px-4 py-3 bg-cream-dark border border-border rounded-xl text-sm focus:border-teal/50 focus:ring-1 focus:ring-teal/10 outline-none transition-colors"
+              placeholder="습관왕길동"
+            />
+            <p className="text-[10px] text-warm-gray-light mt-1 ml-1">친구 추가 시 사용되는 공개 이름</p>
+          </div>
+          <div>
             <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">이름</label>
             <input
               type="text" required value={form.displayName} onChange={e => update('displayName', e.target.value)}
               className="w-full px-4 py-3 bg-cream-dark border border-border rounded-xl text-sm focus:border-teal/50 focus:ring-1 focus:ring-teal/10 outline-none transition-colors"
               placeholder="홍길동"
             />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">사용자명</label>
-            <input
-              type="text" required value={form.username} onChange={e => update('username', e.target.value)}
-              className="w-full px-4 py-3 bg-cream-dark border border-border rounded-xl text-sm focus:border-teal/50 focus:ring-1 focus:ring-teal/10 outline-none transition-colors"
-              placeholder="gildong"
-            />
+            <p className="text-[10px] text-warm-gray-light mt-1 ml-1">나만 볼 수 있어요</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">이메일</label>

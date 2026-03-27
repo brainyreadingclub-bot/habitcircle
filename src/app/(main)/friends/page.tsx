@@ -25,6 +25,7 @@ interface FeedItem {
   created_at: string;
   habit_name: string;
   habit_emoji: string;
+  username: string;
   display_name: string;
   avatar_color: string;
 }
@@ -132,11 +133,10 @@ export default function FriendsPage() {
             {pendingReceived.map(req => (
               <div key={req.friendship_id} className="flex items-center gap-3 p-3 bg-amber-light/50 rounded-xl">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: req.avatar_color }}>
-                  {req.display_name[0]}
+                  {req.username[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{req.display_name}</p>
-                  <p className="text-xs text-warm-gray">@{req.username}</p>
+                  <p className="text-sm font-medium truncate">{req.username}</p>
                 </div>
                 <div className="flex gap-1.5">
                   <button onClick={() => handleRequest(req.friendship_id, 'accept')} className="px-3 py-1.5 bg-teal text-white rounded-lg text-xs font-medium">수락</button>
@@ -156,11 +156,10 @@ export default function FriendsPage() {
             {pendingSent.map(req => (
               <div key={req.friendship_id} className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-border-light">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: req.avatar_color }}>
-                  {req.display_name[0]}
+                  {req.username[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{req.display_name}</p>
-                  <p className="text-xs text-warm-gray">@{req.username}</p>
+                  <p className="text-sm font-medium truncate">{req.username}</p>
                 </div>
                 <button onClick={() => cancelRequest(req.friendship_id)}
                   className="px-3 py-1.5 bg-cream-dark text-warm-gray rounded-lg text-xs font-medium hover:bg-border transition-colors">
@@ -193,11 +192,10 @@ export default function FriendsPage() {
             {friends.map((friend, i) => (
               <div key={friend.id} className={`flex items-center gap-3 p-4 bg-surface rounded-2xl border border-border-light animate-in delay-${Math.min(i + 3, 8)}`}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: friend.avatar_color }}>
-                  {friend.display_name[0]}
+                  {friend.username[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[15px] truncate">{friend.display_name}</p>
-                  <p className="text-xs text-warm-gray-light">@{friend.username}</p>
+                  <p className="font-medium text-[15px] truncate">{friend.username}</p>
                 </div>
                 {friend.total_habits > 0 && (
                   <div className="text-right shrink-0">
@@ -220,11 +218,11 @@ export default function FriendsPage() {
             {feed.map((item, i) => (
               <div key={i} className={`flex items-center gap-3 p-3 bg-surface rounded-xl border border-border-light animate-in delay-${Math.min(i + 3, 8)}`}>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: item.avatar_color }}>
-                  {item.display_name[0]}
+                  {item.username[0]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm">
-                    <span className="font-medium">{item.display_name}</span>
+                    <span className="font-medium">{item.username}</span>
                     <span className="text-warm-gray">님이 </span>
                     <span className="font-medium">{item.habit_emoji} {item.habit_name}</span>
                     <span className="text-warm-gray"> 완료!</span>

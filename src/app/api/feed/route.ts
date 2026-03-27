@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         h.name as habit_name,
         h.emoji as habit_emoji,
         u.id as user_id,
+        u.username,
         u.display_name,
         u.avatar_color
       FROM habit_logs hl
