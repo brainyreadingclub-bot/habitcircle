@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ username: '', email: '', password: '', displayName: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '', passwordConfirm: '', displayName: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,6 +16,10 @@ export default function SignupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (form.password !== form.passwordConfirm) {
+      setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -88,6 +92,21 @@ export default function SignupPage() {
               className="w-full px-4 py-3 bg-cream-dark border border-border rounded-xl text-sm focus:border-teal/50 focus:ring-1 focus:ring-teal/10 outline-none transition-colors"
               placeholder="6자 이상"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">비밀번호 확인</label>
+            <input
+              type="password" required minLength={6} value={form.passwordConfirm} onChange={e => update('passwordConfirm', e.target.value)}
+              className={`w-full px-4 py-3 bg-cream-dark border rounded-xl text-sm focus:ring-1 outline-none transition-colors ${
+                form.passwordConfirm && form.password !== form.passwordConfirm
+                  ? 'border-coral/50 focus:border-coral/70 focus:ring-coral/10'
+                  : 'border-border focus:border-teal/50 focus:ring-teal/10'
+              }`}
+              placeholder="비밀번호를 다시 입력하세요"
+            />
+            {form.passwordConfirm && form.password !== form.passwordConfirm && (
+              <p className="text-[10px] text-coral mt-1 ml-1">비밀번호가 일치하지 않습니다</p>
+            )}
           </div>
           <button
             type="submit" disabled={loading}
