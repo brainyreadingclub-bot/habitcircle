@@ -80,8 +80,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const { id } = await params;
   const db = getDb();
 
+  // Soft delete: mark as inactive instead of hard delete (preserves logs)
   const result = db.prepare(
-    'DELETE FROM habits WHERE id = ? AND user_id = ?'
+    'UPDATE habits SET is_active = 0 WHERE id = ? AND user_id = ?'
   ).run(id, session.userId);
 
   if (result.changes === 0) return errorResponse('습관을 찾을 수 없습니다.', 404);

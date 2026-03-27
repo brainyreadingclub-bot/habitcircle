@@ -7,10 +7,25 @@ declare global {
   var __db: Database.Database | undefined;
 }
 
+function backupDb(dbPath: string) {
+  if (!fs.existsSync(dbPath)) return;
+  const backupDir = path.join(process.cwd(), 'backups');
+  if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const backupPath = path.join(backupDir, `habitcircle-${timestamp}.db`);
+  // Keep max 5 backups
+  const existing = fs.readdirSync(backupDir).filter(f => f.endsWith('.db')).sort();
+  if (existing.length >= 5) {
+    fs.unlinkSync(path.join(backupDir, existing[0]));
+  }
+  fs.copyFileSync(dbPath, backupPath);
+}
+
 export function getDb(): Database.Database {
   if (globalThis.__db) return globalThis.__db;
 
   const dbPath = path.join(process.cwd(), 'habitcircle.db');
+  backupDb(dbPath);
   const db = new Database(dbPath);
 
   // Assign immediately to prevent duplicate connections during concurrent cold-start

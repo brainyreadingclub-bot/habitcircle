@@ -40,6 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 habitcircle.db
-scripts/
 habitcircle.db-shm
 habitcircle.db-wal
+backups/
