@@ -64,7 +64,10 @@ export function getDb(): Database.Database {
 
   // users: identity + onboarding tracking
   migrateAddColumn('users', 'identity', 'TEXT DEFAULT NULL');
-  migrateAddColumn('users', 'onboarding_completed', 'INTEGER DEFAULT 0');
+  if (migrateAddColumn('users', 'onboarding_completed', 'INTEGER DEFAULT 0')) {
+    // Fix: existing users with habits should not be forced into onboarding
+    db.exec(`UPDATE users SET onboarding_completed = 1 WHERE id IN (SELECT DISTINCT user_id FROM habits WHERE is_active = 1)`);
+  }
 
   return db;
 }

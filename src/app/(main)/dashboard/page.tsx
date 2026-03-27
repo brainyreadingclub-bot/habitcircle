@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useFreshDate } from '@/hooks/useFreshDate';
 import { useAuthFetch } from '@/hooks/useAuthFetch';
+import { getTodayInsight, type Insight } from '@/lib/insights';
 
 interface Habit {
   id: number;
@@ -61,6 +62,8 @@ export default function DashboardPage() {
   const [justCompleted, setJustCompleted] = useState(false);
   const [milestoneHabit, setMilestoneHabit] = useState<{ name: string; emoji: string; streak: number } | null>(null);
   const [motivation] = useState(() => MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)]);
+  const [todayInsight, setTodayInsight] = useState<Insight | null>(null);
+  const [insightDismissed, setInsightDismissed] = useState(false);
   const prevCompletedRef = useRef(false);
   const todayStr = useFreshDate();
   const authFetch = useAuthFetch();
@@ -79,9 +82,21 @@ export default function DashboardPage() {
         router.replace('/onboarding');
         return;
       }
-      setHabits(habitsRes.habits || []);
+      const habitsData = habitsRes.habits || [];
+      setHabits(habitsData);
       setFeed((feedRes.feed || []).slice(0, 3));
       setUserName(meRes.user?.displayName || '');
+
+      // Compute insight context
+      const createdAt = meRes.user?.createdAt;
+      const daysSinceJoin = createdAt ? Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000) : 0;
+      const anyStreakBroken = habitsData.some((h: Habit) => h.streak === 0 && !h.completed_today);
+      setTodayInsight(getTodayInsight({
+        daysSinceJoin,
+        streakBroken: anyStreakBroken,
+        completionRate7: 0,
+        habitCount: habitsData.length,
+      }));
     } finally {
       setLoading(false);
     }
@@ -226,6 +241,28 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Today's insight card */}
+      {todayInsight && !insightDismissed && (
+        <div className="mb-5 animate-in delay-2">
+          <div className="relative p-4 bg-surface rounded-2xl border border-amber/20">
+            <button onClick={() => setInsightDismissed(true)}
+              className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full hover:bg-cream-dark text-warm-gray-light">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+            <div className="flex items-start gap-3 pr-6">
+              <span className="text-lg mt-0.5">💡</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium leading-snug">{todayInsight.title}</p>
+                <p className="text-xs text-warm-gray mt-1 line-clamp-2">{todayInsight.subtitle}</p>
+                <Link href={`/insights/${todayInsight.id}`} className="inline-block text-xs text-teal font-medium mt-2 hover:underline">
+                  더 읽기 →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Progress summary with animated bar */}
       {totalCount > 0 && (
         <div className="mb-6 animate-in delay-2">
@@ -255,7 +292,7 @@ export default function DashboardPage() {
         <div className="text-center py-16 animate-in delay-2">
           <div className="w-16 h-16 bg-teal-light rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl" role="img" aria-label="체크">✅</div>
           <p className="text-warm-gray mb-1">아직 습관이 없어요</p>
-          <p className="text-sm text-warm-gray-light mb-6">첫 번째 습관을 만들어보세요!</p>
+          <p className="text-sm text-warm-gray-light mb-6">첫 습관이 가장 어렵습니다. 하지만 시작한 사람만이 변합니다.</p>
           <Link href="/habits/new" className="inline-flex px-6 py-2.5 bg-teal text-white rounded-xl text-sm font-medium hover:bg-teal-dark transition-colors">
             습관 추가하기
           </Link>

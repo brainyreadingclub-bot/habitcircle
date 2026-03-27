@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuthFetch } from '@/hooks/useAuthFetch';
 
 interface CircleDetail {
@@ -23,21 +24,29 @@ interface MemberProgress {
 
 export default function CircleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [circle, setCircle] = useState<CircleDetail | null>(null);
   const [members, setMembers] = useState<MemberProgress[]>([]);
   const [days, setDays] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [myRole, setMyRole] = useState<string>('member');
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const authFetch = useAuthFetch();
 
   useEffect(() => {
     Promise.all([
       authFetch(`/api/circles/${id}`).then(r => r.json()),
       authFetch(`/api/circles/${id}/members`).then(r => r.json()),
-    ]).then(([circleData, membersData]) => {
+      authFetch('/api/auth/me').then(r => r.json()),
+    ]).then(([circleData, membersData, meData]) => {
       setCircle(circleData.circle);
       setMembers(membersData.members || []);
       setDays(membersData.days || []);
+      const myMembership = (membersData.members || []).find((m: MemberProgress) => m.id === meData.user?.id);
+      if (myMembership) setMyRole(myMembership.role);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id, authFetch]);
 
@@ -192,6 +201,74 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
           ))}
         </div>
       </div>
+
+      {/* Leave / Delete actions */}
+      <div className="mt-8 space-y-3 animate-in delay-5">
+        {myRole === 'owner' ? (
+          <button onClick={() => setShowDeleteModal(true)}
+            className="w-full py-3 text-coral text-sm font-medium rounded-xl hover:bg-coral-light transition-colors">
+            서클 삭제
+          </button>
+        ) : (
+          <button onClick={() => setShowLeaveModal(true)}
+            className="w-full py-3 text-coral text-sm font-medium rounded-xl hover:bg-coral-light transition-colors">
+            서클 나가기
+          </button>
+        )}
+      </div>
+
+      {/* Leave modal */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={() => !actionLoading && setShowLeaveModal(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-surface rounded-2xl p-6 w-full max-w-sm border border-border-light" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-bold mb-2">서클을 나가시겠습니까?</h3>
+            <p className="text-sm text-warm-gray mb-5">{circle.emoji} {circle.name}에서 나가면 진행 기록을 더 이상 공유하지 않습니다.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowLeaveModal(false)} disabled={actionLoading}
+                className="flex-1 py-2.5 bg-cream-dark text-sm font-medium rounded-xl">취소</button>
+              <button onClick={async () => {
+                setActionLoading(true);
+                try {
+                  const res = await authFetch(`/api/circles/${id}/members`, { method: 'DELETE' });
+                  if (res.ok) router.push('/circles');
+                } catch { /* */ }
+                finally { setActionLoading(false); }
+              }} disabled={actionLoading}
+                className="flex-1 py-2.5 bg-coral text-white text-sm font-medium rounded-xl disabled:opacity-50">
+                {actionLoading ? '나가는 중...' : '나가기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete modal (owner only) */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={() => !actionLoading && setShowDeleteModal(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-surface rounded-2xl p-6 w-full max-w-sm border border-border-light" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-bold mb-2">서클을 삭제하시겠습니까?</h3>
+            <p className="text-sm text-warm-gray mb-1">{circle.emoji} {circle.name}</p>
+            <p className="text-xs text-warm-gray-light mb-5">모든 멤버와 진행 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteModal(false)} disabled={actionLoading}
+                className="flex-1 py-2.5 bg-cream-dark text-sm font-medium rounded-xl">취소</button>
+              <button onClick={async () => {
+                setActionLoading(true);
+                try {
+                  const res = await authFetch(`/api/circles/${id}`, { method: 'DELETE' });
+                  if (res.ok) router.push('/circles');
+                } catch { /* */ }
+                finally { setActionLoading(false); }
+              }} disabled={actionLoading}
+                className="flex-1 py-2.5 bg-coral text-white text-sm font-medium rounded-xl disabled:opacity-50">
+                {actionLoading ? '삭제 중...' : '삭제'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

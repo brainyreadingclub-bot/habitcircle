@@ -4,6 +4,32 @@ import { getSession } from '@/lib/auth';
 import { jsonResponse, errorResponse, getDaysArray, todayStr } from '@/lib/utils';
 import { logError } from '@/lib/logger';
 
+// Leave a circle (non-owner only)
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getSession(request);
+    if (!session) return errorResponse('Unauthorized', 401);
+
+    const { id } = await params;
+    const db = getDb();
+
+    const membership = db.prepare(
+      'SELECT role FROM circle_members WHERE circle_id = ? AND user_id = ?'
+    ).get(id, session.userId) as { role: string } | undefined;
+
+    if (!membership) return errorResponse('서클에 가입되어 있지 않습니다.', 404);
+    if (membership.role === 'owner') return errorResponse('서클 관리자는 나갈 수 없습니다. 서클을 삭제하세요.', 400);
+
+    db.prepare('DELETE FROM circle_members WHERE circle_id = ? AND user_id = ?').run(id, session.userId);
+    db.prepare('DELETE FROM circle_habits WHERE circle_id = ? AND user_id = ?').run(id, session.userId);
+
+    return jsonResponse({ message: '서클을 나왔습니다.' });
+  } catch (error) {
+    logError('DELETE /api/circles/[id]/members', error);
+    return errorResponse('서버 오류가 발생했습니다.', 500);
+  }
+}
+
 // Get circle members with their habit progress (last 7 days)
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

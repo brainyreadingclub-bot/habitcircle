@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       JOIN users u ON u.id = hl.user_id
       WHERE h.is_shared = 1
         AND hl.completed = 1
+        AND hl.date >= date('now', '-7 days')
         AND u.id IN (
           SELECT CASE WHEN requester_id = ? THEN addressee_id ELSE requester_id END
           FROM friendships

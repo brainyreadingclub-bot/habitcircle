@@ -22,15 +22,32 @@ interface PendingRequest {
 
 interface FeedItem {
   date: string;
+  created_at: string;
   habit_name: string;
   habit_emoji: string;
   display_name: string;
   avatar_color: string;
 }
 
+function relativeTime(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T12:00:00+09:00');
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return '방금 전';
+  if (diffMin < 60) return `${diffMin}분 전`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}시간 전`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return '어제';
+  if (diffDays < 7) return `${diffDays}일 전`;
+  return dateStr;
+}
+
 export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pendingReceived, setPendingReceived] = useState<PendingRequest[]>([]);
+  const [pendingSent, setPendingSent] = useState<PendingRequest[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [tab, setTab] = useState<'friends' | 'feed'>('friends');
   const [searchName, setSearchName] = useState('');
@@ -38,6 +55,7 @@ export default function FriendsPage() {
   const [loading, setLoading] = useState(true);
   const authFetch = useAuthFetch();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
@@ -48,6 +66,7 @@ export default function FriendsPage() {
       ]);
       setFriends(friendsRes.friends || []);
       setPendingReceived(friendsRes.pendingReceived || []);
+      setPendingSent(friendsRes.pendingSent || []);
       setFeed(feedRes.feed || []);
     } catch {
       // API error handled by authFetch (401 redirect)
@@ -81,6 +100,11 @@ export default function FriendsPage() {
     loadData();
   }
 
+  async function cancelRequest(friendshipId: number) {
+    await authFetch(`/api/friends/${friendshipId}`, { method: 'DELETE' });
+    loadData();
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><div className="w-6 h-6 border-2 border-teal/20 border-t-teal rounded-full animate-spin" /></div>;
   }
@@ -100,7 +124,7 @@ export default function FriendsPage() {
       </form>
       {searchMsg && <p className="text-sm text-center mb-4 text-warm-gray">{searchMsg}</p>}
 
-      {/* Pending requests */}
+      {/* Pending received */}
       {pendingReceived.length > 0 && (
         <div className="mb-6 animate-in delay-2">
           <h2 className="text-sm font-medium text-warm-gray mb-3">받은 요청</h2>
@@ -118,6 +142,30 @@ export default function FriendsPage() {
                   <button onClick={() => handleRequest(req.friendship_id, 'accept')} className="px-3 py-1.5 bg-teal text-white rounded-lg text-xs font-medium">수락</button>
                   <button onClick={() => handleRequest(req.friendship_id, 'decline')} className="px-3 py-1.5 bg-border text-warm-gray rounded-lg text-xs font-medium">거절</button>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pending sent */}
+      {pendingSent.length > 0 && (
+        <div className="mb-6 animate-in delay-2">
+          <h2 className="text-sm font-medium text-warm-gray mb-3">보낸 요청</h2>
+          <div className="space-y-2">
+            {pendingSent.map(req => (
+              <div key={req.friendship_id} className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-border-light">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: req.avatar_color }}>
+                  {req.display_name[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{req.display_name}</p>
+                  <p className="text-xs text-warm-gray">@{req.username}</p>
+                </div>
+                <button onClick={() => cancelRequest(req.friendship_id)}
+                  className="px-3 py-1.5 bg-cream-dark text-warm-gray rounded-lg text-xs font-medium hover:bg-border transition-colors">
+                  취소
+                </button>
               </div>
             ))}
           </div>
@@ -181,7 +229,7 @@ export default function FriendsPage() {
                     <span className="font-medium">{item.habit_emoji} {item.habit_name}</span>
                     <span className="text-warm-gray"> 완료!</span>
                   </p>
-                  <p className="text-[11px] text-warm-gray-light mt-0.5">{item.date}</p>
+                  <p className="text-[11px] text-warm-gray-light mt-0.5">{relativeTime(item.created_at || item.date)}</p>
                 </div>
               </div>
             ))}

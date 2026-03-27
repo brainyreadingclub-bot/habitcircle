@@ -31,6 +31,10 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showIdentityModal, setShowIdentityModal] = useState(false);
+  const [selectedIdentity, setSelectedIdentity] = useState('');
+  const [customIdentity, setCustomIdentity] = useState('');
+  const [savingIdentity, setSavingIdentity] = useState(false);
   const authFetch = useAuthFetch();
 
   useEffect(() => {
@@ -42,6 +46,41 @@ export default function ProfilePage() {
       setStats(statsData);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [authFetch]);
+
+  function openIdentityModal() {
+    if (user?.identity) {
+      const preset = IDENTITY_OPTIONS.find(o => o.id === user.identity);
+      if (preset) {
+        setSelectedIdentity(preset.id);
+        setCustomIdentity('');
+      } else {
+        setSelectedIdentity('custom');
+        setCustomIdentity(user.identity);
+      }
+    } else {
+      setSelectedIdentity('');
+      setCustomIdentity('');
+    }
+    setShowIdentityModal(true);
+  }
+
+  async function saveIdentity() {
+    const identity = selectedIdentity === 'custom' ? customIdentity.trim() : selectedIdentity;
+    if (!identity) return;
+    setSavingIdentity(true);
+    try {
+      const res = await authFetch('/api/auth/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identity }),
+      });
+      if (res.ok) {
+        setUser(prev => prev ? { ...prev, identity } : prev);
+        setShowIdentityModal(false);
+      }
+    } catch { /* handled by authFetch */ }
+    finally { setSavingIdentity(false); }
+  }
 
   async function handleLogout() {
     try {
@@ -83,16 +122,19 @@ export default function ProfilePage() {
         <p className="text-sm text-warm-gray">@{user.username}</p>
         <p className="text-xs text-warm-gray-light mt-1">{stats.daysSinceJoin}일째 함께하는 중</p>
 
-        {/* Identity badge */}
+        {/* Identity badge — opens modal instead of navigating to /onboarding */}
         {user.identity ? (
-          <div className="mt-3 px-3 py-1.5 bg-teal-light rounded-full text-xs font-medium text-teal flex items-center gap-1.5">
+          <button onClick={openIdentityModal}
+            className="mt-3 px-3 py-1.5 bg-teal-light rounded-full text-xs font-medium text-teal flex items-center gap-1.5 hover:bg-teal-light/80 transition-colors">
             <span>{getIdentityByid(user.identity)?.emoji || '✨'}</span>
             <span>{getIdentityByid(user.identity)?.label || user.identity}</span>
-          </div>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
         ) : (
-          <Link href="/onboarding" className="mt-3 px-3 py-1.5 bg-surface border border-border-light rounded-full text-xs text-warm-gray hover:border-teal hover:text-teal transition-colors">
+          <button onClick={openIdentityModal}
+            className="mt-3 px-3 py-1.5 bg-surface border border-border-light rounded-full text-xs text-warm-gray hover:border-teal hover:text-teal transition-colors">
             정체성 설정하기
-          </Link>
+          </button>
         )}
       </div>
 
@@ -133,6 +175,18 @@ export default function ProfilePage() {
           </div>
         </Link>
       </div>
+
+      {/* Insights link */}
+      <Link href="/insights" className="block bg-surface rounded-2xl border border-border-light p-4 mb-6 hover:border-teal/30 transition-colors animate-in delay-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-amber-light rounded-xl flex items-center justify-center text-lg">💡</div>
+          <div className="flex-1">
+            <p className="text-sm font-medium">인사이트</p>
+            <p className="text-[11px] text-warm-gray">습관의 심리학 읽기</p>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-warm-gray-light"><polyline points="9 18 15 12 9 6" /></svg>
+        </div>
+      </Link>
 
       {/* Best streak highlight */}
       {stats.bestStreak.current > 0 && (
@@ -176,6 +230,55 @@ export default function ProfilePage() {
         className="w-full py-3 text-coral text-sm font-medium rounded-xl hover:bg-coral-light transition-colors animate-in delay-5">
         로그아웃
       </button>
+
+      {/* Identity selection modal */}
+      {showIdentityModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => !savingIdentity && setShowIdentityModal(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-surface rounded-t-3xl w-full max-w-lg p-6 pb-10 border-t border-border-light animate-in"
+            onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-border rounded-full mx-auto mb-5" />
+            <h3 className="text-base font-bold mb-1">정체성 선택</h3>
+            <p className="text-xs text-warm-gray mb-5">나는 어떤 사람이 되고 싶은가요?</p>
+
+            <div className="grid grid-cols-2 gap-2.5 mb-4">
+              {IDENTITY_OPTIONS.map(opt => (
+                <button key={opt.id} onClick={() => { setSelectedIdentity(opt.id); setCustomIdentity(''); }}
+                  className={`p-3.5 rounded-xl text-left transition-all ${
+                    selectedIdentity === opt.id
+                      ? 'bg-teal-light border-2 border-teal'
+                      : 'bg-cream-dark border border-border-light hover:border-border'
+                  }`}>
+                  <span className="text-xl">{opt.emoji}</span>
+                  <p className="text-sm font-medium mt-1">{opt.label}</p>
+                  <p className="text-[10px] text-warm-gray">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* Custom identity */}
+            <button onClick={() => setSelectedIdentity(selectedIdentity === 'custom' ? '' : 'custom')}
+              className={`w-full p-3 rounded-xl text-left text-sm transition-all mb-4 ${
+                selectedIdentity === 'custom'
+                  ? 'bg-teal-light border-2 border-teal'
+                  : 'bg-cream-dark border border-border-light'
+              }`}>
+              ✏️ 직접 입력하기
+            </button>
+            {selectedIdentity === 'custom' && (
+              <input type="text" value={customIdentity} onChange={e => setCustomIdentity(e.target.value)}
+                placeholder="나는 ___ 사람이다"
+                className="w-full px-4 py-3 bg-cream-dark border border-border rounded-xl text-sm focus:border-teal outline-none mb-4" />
+            )}
+
+            <button onClick={saveIdentity}
+              disabled={savingIdentity || (!selectedIdentity || (selectedIdentity === 'custom' && !customIdentity.trim()))}
+              className="w-full py-3 bg-teal text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-colors">
+              {savingIdentity ? '저장 중...' : '저장'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
