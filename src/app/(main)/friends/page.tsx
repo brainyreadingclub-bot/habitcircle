@@ -41,14 +41,19 @@ export default function FriendsPage() {
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
-    const [friendsRes, feedRes] = await Promise.all([
-      authFetch('/api/friends').then(r => r.json()),
-      authFetch('/api/feed').then(r => r.json()),
-    ]);
-    setFriends(friendsRes.friends || []);
-    setPendingReceived(friendsRes.pendingReceived || []);
-    setFeed(feedRes.feed || []);
-    setLoading(false);
+    try {
+      const [friendsRes, feedRes] = await Promise.all([
+        authFetch('/api/friends').then(r => r.json()),
+        authFetch('/api/feed').then(r => r.json()),
+      ]);
+      setFriends(friendsRes.friends || []);
+      setPendingReceived(friendsRes.pendingReceived || []);
+      setFeed(feedRes.feed || []);
+    } catch {
+      // API error handled by authFetch (401 redirect)
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function sendRequest(e: React.FormEvent) {

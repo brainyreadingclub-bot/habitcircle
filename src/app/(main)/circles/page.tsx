@@ -19,7 +19,7 @@ export default function CirclesPage() {
   const authFetch = useAuthFetch();
 
   useEffect(() => {
-    authFetch('/api/circles').then(r => r.json()).then(d => { setCircles(d.circles || []); setLoading(false); });
+    authFetch('/api/circles').then(r => r.json()).then(d => { setCircles(d.circles || []); }).catch(() => {}).finally(() => setLoading(false));
   }, [authFetch]);
 
   if (loading) {

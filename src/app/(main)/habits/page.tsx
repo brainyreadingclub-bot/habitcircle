@@ -23,7 +23,7 @@ export default function HabitsPage() {
   const authFetch = useAuthFetch();
 
   const loadHabits = useCallback(() => {
-    authFetch('/api/habits').then(r => r.json()).then(d => { setHabits(d.habits); setLoading(false); });
+    authFetch('/api/habits').then(r => r.json()).then(d => { setHabits(d.habits || []); }).catch(() => {}).finally(() => setLoading(false));
   }, [authFetch]);
 
   useEffect(() => { loadHabits(); }, [loadHabits]);

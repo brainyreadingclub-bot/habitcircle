@@ -38,8 +38,7 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
       setCircle(circleData.circle);
       setMembers(membersData.members || []);
       setDays(membersData.days || []);
-      setLoading(false);
-    });
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [id, authFetch]);
 
   function copyCode() {

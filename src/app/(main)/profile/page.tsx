@@ -38,8 +38,7 @@ export default function ProfilePage() {
     ]).then(([userData, statsData]) => {
       setUser(userData.user);
       setStats(statsData);
-      setLoading(false);
-    });
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [authFetch]);
 
   async function handleLogout() {
