@@ -57,9 +57,14 @@ export default function ProfilePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <p className="text-warm-gray text-sm">프로필을 불러올 수 없습니다.</p>
-        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-teal text-white rounded-xl text-sm font-medium">
-          다시 시도
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-teal text-white rounded-xl text-sm font-medium">
+            다시 시도
+          </button>
+          <button onClick={handleLogout} className="px-4 py-2 bg-surface border border-border text-warm-gray rounded-xl text-sm font-medium">
+            로그아웃
+          </button>
+        </div>
       </div>
     );
   }
