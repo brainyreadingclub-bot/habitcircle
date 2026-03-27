@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useFreshDate } from '@/hooks/useFreshDate';
 import { useAuthFetch } from '@/hooks/useAuthFetch';
@@ -50,6 +51,7 @@ const MOTIVATIONS = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [userName, setUserName] = useState('');
@@ -73,13 +75,17 @@ export default function DashboardPage() {
         authFetch('/api/feed').then(r => r.json()),
         authFetch('/api/auth/me').then(r => r.json()),
       ]);
+      if (meRes.user && !meRes.user.onboardingCompleted) {
+        router.replace('/onboarding');
+        return;
+      }
       setHabits(habitsRes.habits || []);
       setFeed((feedRes.feed || []).slice(0, 3));
       setUserName(meRes.user?.displayName || '');
     } finally {
       setLoading(false);
     }
-  }, [todayStr, authFetch]);
+  }, [todayStr, authFetch, router]);
 
   // 날짜 변경 시 즉시 체크 초기화 (새 날 = 새 시작)
   const prevDateRef = useRef(todayStr);

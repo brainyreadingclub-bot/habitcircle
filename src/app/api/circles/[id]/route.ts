@@ -2,54 +2,65 @@ import { NextRequest } from 'next/server';
 import { getDb } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { jsonResponse, errorResponse } from '@/lib/utils';
+import { logError } from '@/lib/logger';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession(request);
-  if (!session) return errorResponse('Unauthorized', 401);
+  try {
+    const session = await getSession(request);
+    if (!session) return errorResponse('Unauthorized', 401);
 
-  const { id } = await params;
-  const db = getDb();
+    const { id } = await params;
+    const db = getDb();
 
-  // Verify membership
-  const member = db.prepare(
-    'SELECT role FROM circle_members WHERE circle_id = ? AND user_id = ?'
-  ).get(id, session.userId);
+    // Verify membership
+    const member = db.prepare(
+      'SELECT role FROM circle_members WHERE circle_id = ? AND user_id = ?'
+    ).get(id, session.userId);
 
-  if (!member) return errorResponse('서클에 가입되어 있지 않습니다.', 403);
+    if (!member) return errorResponse('서클에 가입되어 있지 않습니다.', 403);
 
-  const circle = db.prepare('SELECT * FROM circles WHERE id = ?').get(id);
-  if (!circle) return errorResponse('서클을 찾을 수 없습니다.', 404);
+    const circle = db.prepare('SELECT * FROM circles WHERE id = ?').get(id);
+    if (!circle) return errorResponse('서클을 찾을 수 없습니다.', 404);
 
-  const members = db.prepare(`
-    SELECT u.id, u.username, u.display_name, u.avatar_color, cm.role, cm.joined_at
-    FROM circle_members cm
-    JOIN users u ON u.id = cm.user_id
-    WHERE cm.circle_id = ?
-    ORDER BY cm.joined_at ASC
-  `).all(id);
+    const members = db.prepare(`
+      SELECT u.id, u.username, u.display_name, u.avatar_color, cm.role, cm.joined_at
+      FROM circle_members cm
+      JOIN users u ON u.id = cm.user_id
+      WHERE cm.circle_id = ?
+      ORDER BY cm.joined_at ASC
+    `).all(id);
 
-  const memberCount = members.length;
+    const memberCount = members.length;
 
-  return jsonResponse({ circle: { ...circle as Record<string, unknown>, memberCount }, members });
+    return jsonResponse({ circle: { ...circle as Record<string, unknown>, memberCount }, members });
+  } catch (error) {
+    logError('GET /api/circles/[id]', error);
+    return errorResponse('서버 오류가 발생했습니다.', 500);
+  }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession(request);
-  if (!session) return errorResponse('Unauthorized', 401);
+  try {
+    const session = await getSession(request);
+    if (!session) return errorResponse('Unauthorized', 401);
 
-  const { id } = await params;
-  const db = getDb();
+    const { id } = await params;
+    const db = getDb();
 
-  const circle = db.prepare(
-    'SELECT id FROM circles WHERE id = ? AND created_by = ?'
-  ).get(id, session.userId);
+    const circle = db.prepare(
+      'SELECT id FROM circles WHERE id = ? AND created_by = ?'
+    ).get(id, session.userId);
 
-  if (!circle) return errorResponse('서클을 삭제할 권한이 없습니다.', 403);
+    if (!circle) return errorResponse('서클을 삭제할 권한이 없습니다.', 403);
 
-  // ON DELETE CASCADE handles circle_members and circle_habits
-  const deleteCircle = db.transaction(() => {
-    db.prepare('DELETE FROM circles WHERE id = ?').run(id);
-  });
-  deleteCircle();
-  return jsonResponse({ message: '서클이 삭제되었습니다.' });
+    // ON DELETE CASCADE handles circle_members and circle_habits
+    const deleteCircle = db.transaction(() => {
+      db.prepare('DELETE FROM circles WHERE id = ?').run(id);
+    });
+    deleteCircle();
+    return jsonResponse({ message: '서클이 삭제되었습니다.' });
+  } catch (error) {
+    logError('DELETE /api/circles/[id]', error);
+    return errorResponse('서버 오류가 발생했습니다.', 500);
+  }
 }

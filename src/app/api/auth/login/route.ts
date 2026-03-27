@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { getDb } from '@/lib/db';
 import { verifyPassword, createToken, setSessionCookie } from '@/lib/auth';
 import { jsonResponse, errorResponse } from '@/lib/utils';
+import { logError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return errorResponse('로그인에 실패했습니다.', 500);
+    logError('POST /api/auth/login', error);
+    return errorResponse('서버 오류가 발생했습니다.', 500);
   }
 }

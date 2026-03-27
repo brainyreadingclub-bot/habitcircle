@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthFetch } from '@/hooks/useAuthFetch';
+import { IDENTITY_OPTIONS, getIdentityByid } from '@/lib/constants';
 
 interface User {
   id: number;
@@ -11,6 +12,7 @@ interface User {
   email: string;
   displayName: string;
   avatarColor: string;
+  identity: string | null;
   createdAt: string;
 }
 
@@ -80,6 +82,18 @@ export default function ProfilePage() {
         <h1 className="text-xl font-bold">{user.displayName}</h1>
         <p className="text-sm text-warm-gray">@{user.username}</p>
         <p className="text-xs text-warm-gray-light mt-1">{stats.daysSinceJoin}일째 함께하는 중</p>
+
+        {/* Identity badge */}
+        {user.identity ? (
+          <div className="mt-3 px-3 py-1.5 bg-teal-light rounded-full text-xs font-medium text-teal flex items-center gap-1.5">
+            <span>{getIdentityByid(user.identity)?.emoji || '✨'}</span>
+            <span>{getIdentityByid(user.identity)?.label || user.identity}</span>
+          </div>
+        ) : (
+          <Link href="/onboarding" className="mt-3 px-3 py-1.5 bg-surface border border-border-light rounded-full text-xs text-warm-gray hover:border-teal hover:text-teal transition-colors">
+            정체성 설정하기
+          </Link>
+        )}
       </div>
 
       {/* Overview stats */}

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { getDb } from '@/lib/db';
 import { hashPassword, createToken, setSessionCookie } from '@/lib/auth';
 import { jsonResponse, errorResponse } from '@/lib/utils';
+import { logError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
       },
     }, 201);
   } catch (error) {
-    console.error('Signup error:', error);
-    return errorResponse('회원가입에 실패했습니다. 다시 시도해주세요.', 500);
+    logError('POST /api/auth/signup', error);
+    return errorResponse('서버 오류가 발생했습니다.', 500);
   }
 }

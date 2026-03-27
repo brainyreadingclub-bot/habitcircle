@@ -13,6 +13,11 @@ export default function NewHabitPage() {
   const [description, setDescription] = useState('');
   const [emoji, setEmoji] = useState('✅');
   const [isShared, setIsShared] = useState(false);
+  const [showDesign, setShowDesign] = useState(false);
+  const [triggerTime, setTriggerTime] = useState('');
+  const [triggerLocation, setTriggerLocation] = useState('');
+  const [smallestVersion, setSmallestVersion] = useState('');
+  const [reward, setReward] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const authFetch = useAuthFetch();
@@ -25,7 +30,13 @@ export default function NewHabitPage() {
       const res = await authFetch('/api/habits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description, emoji, isShared }),
+        body: JSON.stringify({
+          name, description, emoji, isShared,
+          triggerTime: triggerTime || undefined,
+          triggerLocation: triggerLocation || undefined,
+          smallestVersion: smallestVersion || undefined,
+          reward: reward || undefined,
+        }),
       });
       if (!res.ok) { const d = await res.json(); setError(d.error); return; }
       router.push('/dashboard');
@@ -79,6 +90,47 @@ export default function NewHabitPage() {
             className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-sm focus:border-teal outline-none transition-colors resize-none h-20"
             placeholder="이 습관에 대한 메모..."
           />
+        </div>
+
+        {/* 습관 설계 (Atomic Habits) — 접이식 */}
+        <div>
+          <button type="button" onClick={() => setShowDesign(!showDesign)}
+            className="flex items-center gap-2 text-sm text-teal font-medium mb-3">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              className={`transition-transform ${showDesign ? 'rotate-90' : ''}`}>
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            습관 설계 (선택사항)
+          </button>
+          {showDesign && (
+            <div className="space-y-4 pl-1 animate-in">
+              <div>
+                <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">📍 언제 하나요?</label>
+                <input type="text" value={triggerTime} onChange={e => setTriggerTime(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-sm focus:border-teal outline-none"
+                  placeholder="예: 아침 7시, 점심 후" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">📍 어디서 하나요?</label>
+                <input type="text" value={triggerLocation} onChange={e => setTriggerLocation(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-sm focus:border-teal outline-none"
+                  placeholder="예: 거실, 회사 책상" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">🔬 가장 작은 버전</label>
+                <input type="text" value={smallestVersion} onChange={e => setSmallestVersion(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-sm focus:border-teal outline-none"
+                  placeholder="예: 1페이지만 읽기" />
+                <p className="text-[11px] text-warm-gray-light mt-1 ml-1">2분 안에 끝낼 수 있는 버전</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-warm-gray mb-1.5 ml-1">🎁 완료 후 보상</label>
+                <input type="text" value={reward} onChange={e => setReward(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-sm focus:border-teal outline-none"
+                  placeholder="예: 좋아하는 커피 한 잔" />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between p-4 bg-surface rounded-xl border border-border-light">

@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   display_name TEXT NOT NULL,
   avatar_color TEXT DEFAULT '#6366f1',
+  identity TEXT DEFAULT NULL,
+  onboarding_completed INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );
@@ -19,6 +21,10 @@ CREATE TABLE IF NOT EXISTS habits (
   is_shared INTEGER DEFAULT 0,
   is_active INTEGER DEFAULT 1,
   sort_order INTEGER DEFAULT 0,
+  trigger_time TEXT DEFAULT NULL,
+  trigger_location TEXT DEFAULT NULL,
+  smallest_version TEXT DEFAULT NULL,
+  reward TEXT DEFAULT NULL,
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );
