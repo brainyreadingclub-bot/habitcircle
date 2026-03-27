@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { useAuthFetch } from '@/hooks/useAuthFetch';
 
 interface CircleDetail {
   id: number;
@@ -27,18 +28,19 @@ export default function CircleDetailPage({ params }: { params: Promise<{ id: str
   const [days, setDays] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const authFetch = useAuthFetch();
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/circles/${id}`).then(r => r.json()),
-      fetch(`/api/circles/${id}/members`).then(r => r.json()),
+      authFetch(`/api/circles/${id}`).then(r => r.json()),
+      authFetch(`/api/circles/${id}/members`).then(r => r.json()),
     ]).then(([circleData, membersData]) => {
       setCircle(circleData.circle);
       setMembers(membersData.members || []);
       setDays(membersData.days || []);
       setLoading(false);
     });
-  }, [id]);
+  }, [id, authFetch]);
 
   function copyCode() {
     if (circle) {

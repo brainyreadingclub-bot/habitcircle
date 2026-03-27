@@ -73,6 +73,7 @@ CREATE INDEX IF NOT EXISTS idx_habit_logs_date ON habit_logs(date);
 CREATE INDEX IF NOT EXISTS idx_habit_logs_user ON habit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_habit_logs_habit_date ON habit_logs(habit_id, date);
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
+CREATE INDEX IF NOT EXISTS idx_habits_sort ON habits(user_id, sort_order);
 CREATE INDEX IF NOT EXISTS idx_friendships_users ON friendships(requester_id, addressee_id);
 CREATE INDEX IF NOT EXISTS idx_friendships_addressee ON friendships(addressee_id);
 CREATE INDEX IF NOT EXISTS idx_circle_members_circle ON circle_members(circle_id);

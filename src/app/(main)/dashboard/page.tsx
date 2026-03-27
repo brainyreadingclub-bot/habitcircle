@@ -81,6 +81,15 @@ export default function DashboardPage() {
     }
   }, [todayStr, authFetch]);
 
+  // 날짜 변경 시 즉시 체크 초기화 (새 날 = 새 시작)
+  const prevDateRef = useRef(todayStr);
+  useEffect(() => {
+    if (prevDateRef.current !== todayStr) {
+      prevDateRef.current = todayStr;
+      setHabits(prev => prev.map(h => ({ ...h, completed_today: 0 })));
+    }
+  }, [todayStr]);
+
   useEffect(() => { fetchData(); }, [fetchData]);
 
   async function toggleHabit(habitId: number) {

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthFetch } from '@/hooks/useAuthFetch';
 
 const EMOJI_OPTIONS = ['👥', '🎯', '💪', '📚', '🏃', '🧘', '🌱', '⭐', '🔥', '🚀', '🎨', '🎵'];
 
@@ -13,12 +14,13 @@ export default function NewCirclePage() {
   const [emoji, setEmoji] = useState('👥');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const authFetch = useAuthFetch();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/circles', {
+      const res = await authFetch('/api/circles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description, emoji }),

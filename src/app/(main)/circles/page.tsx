@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useAuthFetch } from '@/hooks/useAuthFetch';
 
 interface Circle {
   id: number;
@@ -15,10 +16,11 @@ interface Circle {
 export default function CirclesPage() {
   const [circles, setCircles] = useState<Circle[]>([]);
   const [loading, setLoading] = useState(true);
+  const authFetch = useAuthFetch();
 
   useEffect(() => {
-    fetch('/api/circles').then(r => r.json()).then(d => { setCircles(d.circles || []); setLoading(false); });
-  }, []);
+    authFetch('/api/circles').then(r => r.json()).then(d => { setCircles(d.circles || []); setLoading(false); });
+  }, [authFetch]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><div className="w-6 h-6 border-2 border-teal/20 border-t-teal rounded-full animate-spin" /></div>;
